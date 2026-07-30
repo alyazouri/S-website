@@ -459,6 +459,30 @@ export default function Home() {
           <PingMonitor />
         </section>
 
+        {/* DNS Live Status Banner */}
+        <section className="mt-16">
+          <a
+            href="/dns"
+            className="group card neon-box block overflow-hidden rounded-2xl p-6 transition-all hover:border-orange-400/50"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-red-600 text-2xl shadow-lg shadow-orange-500/30">
+                  📡
+                </div>
+                <div>
+                  <div className="font-display text-xs tracking-[0.3em] text-orange-400">DNS LIVE STATUS</div>
+                  <div className="text-lg font-bold text-white">{lang === "ar" ? "فحص DNS حي لكل سيرفرات الأردن" : "Live DNS Check for All Jordan Servers"}</div>
+                  <div className="text-xs text-white/50">{lang === "ar" ? "فحص فعلي لـ 100+ سيرفر DNS — هل تعمل؟ هل تنفع لإنترنتك؟" : "Real check of 100+ DNS servers — are they working for you?"}</div>
+                </div>
+              </div>
+              <div className="btn-primary rounded-xl px-6 py-3 text-sm group-hover:translate-x-1 transition-transform">
+                {lang === "ar" ? "🔍 افحص الآن" : "🔍 Check Now"} →
+              </div>
+            </div>
+          </a>
+        </section>
+
         {/* PAC Section */}
         <section id="pac" className="mt-16 scroll-mt-32">
           <PacSection />
