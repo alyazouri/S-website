@@ -71,49 +71,34 @@ export function computeSensitivity(p: SensParams): Sens {
 
   // ──── 1) جلب بروفايل السلاح المرجعي ────
   const wp = getWeaponProfile(p.weaponName, p.weaponRecoil, p.weaponRange, p.weaponType);
-  // wp.cam/ads/gyro/gyroAds = [TPP, FPP, Red, 2x, 3x, 4x, 6x, 8x]
-  // هذه القيم مضبوطة لـ iPad Pro 11" · 120FPS · 240Hz · 4 أصابع
 
   // ──── 2) عامل الجهاز ────
-  // المرجع: iPad Pro 11" → 120 FPS, 240Hz, 11.0", excellent
   const refFps = 120, refTouch = 240, refScreen = 11.0;
   const fps = p.device.fps;
   const touch = p.device.touchRate;
   const screen = p.device.screenSize;
   const gyroQ = p.device.gyroQuality;
 
-  // FPS أقل → حساسية أعلى (تعويض)، FPS أعلى → حساسية أقل (أدق)
-  const fpsMul = refFps / fps; // 120/60=2.0, 120/120=1.0, 120/165=0.73
-  const fpsFactor = 0.65 + fpsMul * 0.35; // normalize: 0.90..1.35
+  const fpsMul = refFps / fps;
+  const fpsFactor = 0.65 + fpsMul * 0.35;
 
-  // Touch rate أقل → حساسية أعلى
   const touchMul = refTouch / touch;
-  const touchFactor = 0.80 + touchMul * 0.20; // 0.85..1.20
+  const touchFactor = 0.80 + touchMul * 0.20;
 
-  // شاشة أصغر → حساسية أقل (مسافة سحب أقل)
-  // شاشة أكبر → حساسية أعلى (مسافة سحب أطول)
-  const screenFactor = screen / refScreen; // 6.5/11=0.59, 11/11=1.0, 13/11=1.18
+  const screenFactor = screen / refScreen;
 
-  // الجايرو
   const gyroQualityMul = gyroQ === "excellent" ? 1.0 : gyroQ === "good" ? 0.92 : 0.80;
 
-  // عامل الجهاز الكلي لللمس (Camera + ADS)
   const deviceMul = fpsFactor * touchFactor * screenFactor;
-
-  // عامل الجهاز للجايرو (يتأثر بجودة الجايرو أيضاً)
   const deviceGyroMul = deviceMul * gyroQualityMul;
 
   // ──── 3) عامل الأصابع ────
-  // المرجع: 4 أصابع = 1.0
-  // 2 أصابع → حساسية أعلى (عمل أكثر لكل إصبع)
-  // 6 أصابع → حساسية أقل (أصابع مخصصة)
   const fingerMul: Record<number, number> = {
     2: 1.15, 3: 1.06, 4: 1.0, 5: 0.95, 6: 0.90,
   };
   const fMul = fingerMul[p.fingers] ?? 1.0;
 
   // ──── 4) عامل أسلوب اللعب ────
-  // يؤثر على CQC (TPP/FPP) والسكوبات بشكل مختلف
   const styleCQC: Record<string, number> = {
     headshot: 0.96, spray: 1.05, competitive: 1.0,
     close: 1.12, reflex: 1.08, conqueror: 0.98,
@@ -131,16 +116,13 @@ export function computeSensitivity(p: SensParams): Sens {
   const sGyro = styleGyro[p.styleId] ?? 1.0;
 
   // ──── 5) عامل الجايرو لـ TPP/FPP ────
-  // إذا الجايرو OFF أو Scope On → TPP/FPP أسرع (اللمس فقط للمواجهات)
   const gyroOffBoost = (p.gyroMode === "off" || p.gyroMode === "scope") ? 1.15 : 1.0;
 
   // ──── 6) عامل تتبع الأهداف المتحركة (Vehicle Tracking) ────
-  // TPP/FPP + Red Dot + 2x تحتاج حساسية أعلى لتلحق الخصم بالسيارة
-  // السكوبات العالية (4x-8x) لا تحتاج رفع (لا تستخدم ضد سيارات قريبة)
-  const VEHICLE_TRACK_CQC = 1.18;   // +18% لـ TPP/FPP
-  const VEHICLE_TRACK_RED = 1.14;   // +14% لـ Red Dot
-  const VEHICLE_TRACK_2X = 1.10;    // +10% لـ 2x
-  const VEHICLE_TRACK_3X = 1.05;    // +5% لـ 3x
+  const VEHICLE_TRACK_CQC = 1.18;
+  const VEHICLE_TRACK_RED = 1.14;
+  const VEHICLE_TRACK_2X = 1.10;
+  const VEHICLE_TRACK_3X = 1.05;
 
   // ════════════════════════════════════════════════════════════
   //  تطبيق المعاملات على بروفايل السلاح
@@ -150,7 +132,7 @@ export function computeSensitivity(p: SensParams): Sens {
   const scopeMul = deviceMul * fMul * sScope;
   const gMul = deviceGyroMul * fMul * sGyro;
 
-  // Camera — مع تتبع الأهداف المتحركة
+  // Camera
   const cam: SensObj = {
     tpp:    clamp(wp.cam[0] * cqcMul),
     fpp:    clamp(wp.cam[1] * cqcMul),
@@ -162,7 +144,7 @@ export function computeSensitivity(p: SensParams): Sens {
     scope8: clamp(wp.cam[7] * scopeMul),
   };
 
-  // ADS — مع تتبع الأهداف المتحركة
+  // ADS
   const ads: SensObj = {
     tpp:    clamp(wp.ads[0] * cqcMul),
     fpp:    clamp(wp.ads[1] * cqcMul),
@@ -178,10 +160,9 @@ export function computeSensitivity(p: SensParams): Sens {
   const useGyroAll = p.gyroMode === "always";
   const useGyroAny = p.gyroMode !== "off";
 
-  // Gyro — تتبع محسّن للأهداف المتحركة (السيارات)
-  const GYRO_TRACK_CQC = 1.15;  // +15% جايرو TPP/FPP لتتبع السيارات
-  const GYRO_TRACK_RED = 1.12;  // +12% جايرو Red Dot
-  const GYRO_TRACK_2X = 1.08;   // +8% جايرو 2x
+  const GYRO_TRACK_CQC = 1.15;
+  const GYRO_TRACK_RED = 1.12;
+  const GYRO_TRACK_2X = 1.08;
 
   const gyroCam: SensObj = {
     tpp:    useGyroAll ? clampGyro(wp.gyro[0] * gMul * GYRO_TRACK_CQC) : 0,
