@@ -52,6 +52,16 @@ export function Hero({ ping }: { ping: number | null }) {
               <a href="#pac" className="btn-ghost rounded-xl px-6 py-3 text-sm">
                 {t("hero_cta2", lang)}
               </a>
+              <a
+                href="/dns"
+                className="group relative overflow-hidden rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-6 py-3 text-sm font-bold text-emerald-300 transition-all hover:border-emerald-400/60 hover:bg-emerald-500/20 hover:shadow-[0_0_25px_-5px_rgba(52,211,153,0.4)]"
+              >
+                <span className="absolute top-1.5 right-2 flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                </span>
+                📡 DNS Live Status
+              </a>
             </div>
 
             <div className="mt-8 flex flex-wrap items-center gap-5 text-sm text-white/60">
